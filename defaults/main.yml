@@ -1,0 +1,16 @@
+mongo_image: "mongo:6-jammy"
+opensearch_image: "opensearchproject/opensearch:1"
+graylog_image: "graylog/graylog:6.2"
+
+mongo_container_name: "ubuntu-mongo"
+opensearch_container_name: "amazon-opensearch"
+graylog_container_name: "ubuntu-graylog"
+
+graylog_admin_password: "root"
+graylog_password_secret: "a3d2e1a7b6c5f4d3e7e44f8c9f9c8d2b"
+graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
+
+graylog_api_auth_token: ""
+graylog_input_name: "Test01"
+graylog_input_type: "org.graylog2.inputs.gelf.udp.GELFUDPInput"
+graylog_input_port: 12201

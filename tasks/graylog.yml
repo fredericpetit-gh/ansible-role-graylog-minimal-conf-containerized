@@ -1,0 +1,49 @@
+# Generate Basic Auth token for admin user
+- name: Generate Basic Auth token for admin
+  set_fact:
+    graylog_api_auth_token: "{{ ('admin:' + graylog_admin_password) | b64encode }}"
+
+# Retrieve existing inputs from Graylog
+- name: Get existing Graylog inputs
+  uri:
+    url: "{{ graylog_http_external_uri }}api/system/inputs"
+    method: GET
+    headers:
+      X-Requested-By: ansible
+      Authorization: "Basic {{ graylog_api_auth_token }}"
+    return_content: true
+  register: inputs_response
+
+# Set input list from Graylog response
+- name: Define list of existing inputs
+  set_fact:
+    graylog_inputs: "{{ inputs_response.json.inputs | default([]) }}"
+
+# Display number of existing inputs if any
+- name: Show number of existing inputs
+  debug:
+    msg: "There are already {{ graylog_inputs | length }} configured input(s)."
+  when: graylog_inputs | length > 0
+
+# Create a new GELF UDP input if none exist
+- name: Create GELF UDP input "{{ graylog_input_name }}"
+  when: graylog_inputs | length == 0
+  uri:
+    url: "{{ graylog_http_external_uri }}api/system/inputs"
+    method: POST
+    headers:
+      X-Requested-By: ansible
+      Authorization: "Basic {{ graylog_api_auth_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      title: "{{ graylog_input_name }}"
+      type: "{{ graylog_input_type }}"
+      configuration:
+        bind_address: "0.0.0.0"
+        port: "{{ graylog_input_port }}"
+        recv_buffer_size: 262144
+        decompress_size_limit: 8388608
+        number_worker_threads: 2
+      global: true
+    status_code: [200, 201]
